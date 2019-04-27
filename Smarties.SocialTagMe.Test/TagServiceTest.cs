@@ -10,33 +10,92 @@ namespace Smarties.SocialTagMe.Test
     public class TagServiceTest
     {
         [Fact]
-        public async Task TagTestAsync()
+        public async Task TagFaceAsync()
         {
-            var imagePath = GetImagePath("face1.jpg");
-
             var tagService = new TagService();
+
+            var imagePaths = new[]
+            {
+                GetImagePath("face1.jpg"),
+                GetImagePath("face2.jpg"),
+                GetImagePath("face3.jpg"),
+                GetImagePath("face4.jpg")
+            };
 
             var socialInfo = new SocialInfo
             {
                 Name = "face"
             };
 
-            var id = await tagService.TagAsync(imagePath, socialInfo);
+            var id = await tagService.TagAsync(imagePaths, socialInfo);
         }
 
         [Fact]
-        public async Task Tag2TestAsync()
+        public async Task TagAliAsync()
         {
-            var imagePath = GetImagePath("mehyaa1.jpg");
-
             var tagService = new TagService();
+
+            var imagePaths = new[]
+            {
+                GetImagePath("ali1.jpg"),
+                GetImagePath("ali2.jpg"),
+                GetImagePath("ali3.jpg"),
+                GetImagePath("ali4.jpg"),
+                GetImagePath("ali5.jpg")
+            };
+
+            var socialInfo = new SocialInfo
+            {
+                Name = "ali"
+            };
+
+            var id = await tagService.TagAsync(imagePaths, socialInfo);
+        }
+
+        [Fact]
+        public async Task TagMehyaaAsync()
+        {
+            var tagService = new TagService();
+
+            var imagePaths = new[]
+            {
+                GetImagePath("mehyaa1.jpg"),
+                GetImagePath("mehyaa2.jpg"),
+                GetImagePath("mehyaa3.jpg"),
+                GetImagePath("mehyaa4.jpg"),
+                GetImagePath("mehyaa5.jpg"),
+                GetImagePath("mehyaa6.jpg"),
+                GetImagePath("mehyaa7.jpg")
+            };
 
             var socialInfo = new SocialInfo
             {
                 Name = "mehyaa"
             };
 
-            var id = await tagService.TagAsync(imagePath, socialInfo);
+            var id = await tagService.TagAsync(imagePaths, socialInfo);
+        }
+
+        [Fact]
+        public async Task TagMuratAsync()
+        {
+            var tagService = new TagService();
+
+            var imagePaths = new[]
+            {
+                GetImagePath("murat1.jpg"),
+                GetImagePath("murat2.jpg"),
+                GetImagePath("murat3.jpg"),
+                GetImagePath("murat4.jpg"),
+                GetImagePath("murat5.jpg")
+            };
+
+            var socialInfo = new SocialInfo
+            {
+                Name = "murat"
+            };
+
+            var id = await tagService.TagAsync(imagePaths, socialInfo);
         }
 
         [Fact]

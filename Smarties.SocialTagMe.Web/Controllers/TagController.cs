@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -19,21 +20,28 @@ namespace Smarties.SocialTagMe.Web.Controllers
         }
 
         [HttpPost("tag")]
-        public async Task<int> Tag(IFormFile file, [FromForm] SocialInfo socialInfo)
+        public async Task<int> Tag(IEnumerable<IFormFile> files)
         {
-            if (file.Length == 0)
+            var filePaths = new List<string>();
+
+            foreach (var file in files)
             {
-                return default;
+                if (file.Length == 0)
+                {
+                    continue;
+                }
+
+                var filePath = Path.GetTempFileName();
+
+                using (var fileStream = new FileStream(filePath, FileMode.Append))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                filePaths.Add(filePath);
             }
 
-            var filePath = Path.GetTempFileName();
-
-            using (var fileStream = new FileStream(filePath, FileMode.Append))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
-            return await _tagService.TagAsync(filePath, socialInfo);
+            return await _tagService.TagAsync(filePaths);
         }
 
         [HttpPost("update/{id:int}")]

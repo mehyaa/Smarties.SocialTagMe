@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\ali1.jpg" />
+    <None Remove="Images\ali2.jpg" />
+    <None Remove="Images\ali3.jpg" />
+    <None Remove="Images\ali4.jpg" />
+    <None Remove="Images\ali5.jpg" />
     <None Remove="Images\face1.jpg" />
     <None Remove="Images\face2.jpg" />
     <None Remove="Images\face3.jpg" />
@@ -18,10 +23,30 @@
     <None Remove="Images\mehyaa5.jpg" />
     <None Remove="Images\mehyaa6.jpg" />
     <None Remove="Images\mehyaa7.jpg" />
+    <None Remove="Images\murat1.jpg" />
+    <None Remove="Images\murat2.jpg" />
+    <None Remove="Images\murat3.jpg" />
+    <None Remove="Images\murat4.jpg" />
+    <None Remove="Images\murat5.jpg" />
     <None Remove="Images\unknown1.jpg" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Images\ali1.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\ali2.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\ali3.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\ali4.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\ali5.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Images\face1.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -53,6 +78,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Images\mehyaa7.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\murat1.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\murat2.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\murat3.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\murat4.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Images\murat5.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Images\unknown1.jpg">

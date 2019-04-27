@@ -6,7 +6,9 @@ using Newtonsoft.Json;
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Smarties.SocialTagMe.Framework
@@ -35,20 +37,30 @@ namespace Smarties.SocialTagMe.Framework
             }
         }
 
-        public async Task<int> TagAsync(string path, SocialInfo socialInfo = null)
+        public async Task<int> TagAsync(IEnumerable<string> paths, SocialInfo socialInfo = null)
         {
-            var existingSocialInfo = await QueryAsync(path);
+            var pathArray = paths.ToArray();
 
-            if (existingSocialInfo != null)
+            foreach (var path in pathArray)
             {
-                return existingSocialInfo.Id;
+                var existingSocialInfo = await QueryAsync(path);
+
+                if (existingSocialInfo != null)
+                {
+                    return existingSocialInfo.Id;
+                }
             }
 
             var id = NextId();
 
-            var imagePath = Path.Combine(DataFolder, $"{id.ToString()}.image");
+            for (int i = 0; i < paths.Count(); i++)
+            {
+                var path = pathArray[i];
 
-            File.Copy(path, imagePath);
+                var imagePath = Path.Combine(DataFolder, $"{id.ToString()}.{i}.image");
+
+                File.Copy(path, imagePath);
+            }
 
             if (socialInfo != null)
             {
@@ -68,9 +80,9 @@ namespace Smarties.SocialTagMe.Framework
 
         public Task UpdateAsync(int id, SocialInfo socialInfo)
         {
-            var imagePath = Path.Combine(DataFolder, $"{id.ToString()}.image");
+            var files = Directory.GetFiles(DataFolder, "*.image");
 
-            if (File.Exists(imagePath) && socialInfo != null)
+            if (files.Any() && socialInfo != null)
             {
                 var infoPath = Path.Combine(DataFolder, $"{id.ToString()}.json");
 
@@ -136,7 +148,7 @@ namespace Smarties.SocialTagMe.Framework
                     faceImages[counter] = faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic).Mat;
                     //faceImages[counter] = faceImage.Mat;
 
-                    faceLabels[counter] = int.Parse(Path.GetFileNameWithoutExtension(file));
+                    faceLabels[counter] = int.Parse(Path.GetFileName(file).Split('.').First());
 
                     counter++;
                 }

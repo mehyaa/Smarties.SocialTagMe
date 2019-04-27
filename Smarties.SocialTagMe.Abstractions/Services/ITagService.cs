@@ -1,12 +1,12 @@
 ﻿using Smarties.SocialTagMe.Abstractions.Models;
-using System.IO;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Smarties.SocialTagMe.Abstractions.Services
 {
     public interface ITagService
     {
-        Task<int> TagAsync(string imagePath, SocialInfo socialInfo = null);
+        Task<int> TagAsync(IEnumerable<string> imagePaths, SocialInfo socialInfo = null);
         Task UpdateAsync(int id, SocialInfo socialInfo);
         Task<SocialInfo> QueryAsync(string imagePath);
     }
