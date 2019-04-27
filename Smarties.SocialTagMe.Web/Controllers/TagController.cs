@@ -1,9 +1,9 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Smarties.SocialTagMe.Web.Controllers
 {
@@ -18,23 +18,28 @@ namespace Smarties.SocialTagMe.Web.Controllers
             _tagService = tagService;
         }
 
-        [HttpPost("query")]
-        public async Task<SocialInfo> Query(IFormFile file)
+        [HttpPost("tag")]
+        public async Task<int> Tag(IFormFile file, [FromForm] SocialInfo socialInfo)
         {
-            FileStream fs = null;
-
-            if (file.Length > 0)
+            if (file.Length == 0)
             {
-                await file.CopyToAsync(fs);
+                return default;
             }
 
-            return await _tagService.QueryAsync(fs); 
+            var filePath = Path.GetTempFileName();
+
+            using (var fileStream = new FileStream(filePath, FileMode.Append))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            return await _tagService.TagAsync(filePath, socialInfo);
         }
 
-        [HttpPost("update/{id}")]
-        public async Task Update(string id, [FromBody] SocialInfo socialInfo)
+        [HttpPost("update/{id:int}")]
+        public async Task Update(int id, [FromBody] SocialInfo socialInfo)
         {
-            if (!string.IsNullOrEmpty(id))
+            if (id == default || socialInfo == null)
             {
                 return;
             }
@@ -42,17 +47,22 @@ namespace Smarties.SocialTagMe.Web.Controllers
             await _tagService.UpdateAsync(id, socialInfo);
         }
 
-        [HttpPost("tag")]
-        public async Task<string> Tag(IFormFile file, [FromForm] SocialInfo socialInfo)
+        [HttpPost("query")]
+        public async Task<SocialInfo> Query(IFormFile file)
         {
-            FileStream fs = null;
-
-            if (file.Length > 0)
+            if (file.Length == 0)
             {
-                await file.CopyToAsync(fs);
+                return null;
             }
 
-            return await _tagService.TagAsync(fs, socialInfo);
+            var filePath = Path.GetTempFileName();
+
+            using (var fileStream = new FileStream(filePath, FileMode.Append))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            return await _tagService.QueryAsync(filePath);
         }
     }
 }

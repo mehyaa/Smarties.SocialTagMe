@@ -2,11 +2,10 @@
 using Emgu.CV.CvEnum;
 using Emgu.CV.Face;
 using Emgu.CV.Structure;
+using Newtonsoft.Json;
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
 using System;
-using System.Collections.Concurrent;
-using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -14,72 +13,103 @@ namespace Smarties.SocialTagMe.Framework
 {
     public class TagService : ITagService
     {
-        private readonly ConcurrentDictionary<int, byte[]> _faceData = new ConcurrentDictionary<int, byte[]>();
+        private const int FaceRecognizerNumberOfComponents = 0;
+        private const int FaceRecognizerThreshold = 15;
 
-        private readonly ConcurrentDictionary<int, SocialInfo> _socialInfoData = new ConcurrentDictionary<int, SocialInfo>();
+        private const int ResizeImageWidth = 400;
+        private const int ResizeImageHeight = 300;
+
+        private string DataFolder => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Data");
+
+        private string TrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.data");
 
         private readonly FaceRecognizer _faceRecognizer;
 
-        private string DataFolder => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.data");
-
         public TagService()
         {
-            _faceRecognizer = new EigenFaceRecognizer(80, double.PositiveInfinity);
+            _faceRecognizer = new EigenFaceRecognizer(FaceRecognizerNumberOfComponents, FaceRecognizerThreshold);
+
+            if (!Directory.Exists(DataFolder))
+            {
+                Directory.CreateDirectory(DataFolder);
+            }
         }
 
-        public async Task<int> TagAsync(Stream image, SocialInfo socialInfo = null)
+        public async Task<int> TagAsync(string path, SocialInfo socialInfo = null)
         {
-            var existingSocialInfo = await QueryAsync(image);
+            var existingSocialInfo = await QueryAsync(path);
 
             if (existingSocialInfo != null)
             {
                 return existingSocialInfo.Id;
             }
 
-            using (var memoryStream = new MemoryStream())
+            var id = NextId();
+
+            var imagePath = Path.Combine(DataFolder, $"{id.ToString()}.image");
+
+            File.Copy(path, imagePath);
+
+            if (socialInfo != null)
             {
-                image.CopyTo(memoryStream);
+                socialInfo.Id = id;
 
-                var bytes = memoryStream.ToArray();
+                var infoPath = Path.Combine(DataFolder, $"{id.ToString()}.json");
 
-                var id = NextId();
+                var infoJson = JsonConvert.SerializeObject(socialInfo);
 
-                _faceData.AddOrUpdate(id, bytes, (key, oldValue) => bytes);
-
-                if (socialInfo != null)
-                {
-                    _socialInfoData.AddOrUpdate(id, socialInfo, (key, oldValue) => socialInfo);
-                }
-
-                Train();
-
-                return id;
+                File.WriteAllText(infoPath, infoJson);
             }
+
+            Train();
+
+            return id;
         }
 
         public Task UpdateAsync(int id, SocialInfo socialInfo)
         {
-            if (socialInfo != null)
+            var imagePath = Path.Combine(DataFolder, $"{id.ToString()}.image");
+
+            if (File.Exists(imagePath) && socialInfo != null)
             {
-                _socialInfoData.AddOrUpdate(id, socialInfo, (key, oldValue) => socialInfo);
+                var infoPath = Path.Combine(DataFolder, $"{id.ToString()}.json");
+
+                var infoJson = JsonConvert.SerializeObject(socialInfo);
+
+                File.WriteAllText(infoPath, infoJson);
             }
 
             return Task.CompletedTask;
         }
 
-        public Task<SocialInfo> QueryAsync(Stream image)
+        public Task<SocialInfo> QueryAsync(string imagePath)
         {
-            _faceRecognizer.Read(DataFolder);
+            if (!File.Exists(TrainingDataPath))
+            {
+                return Task.FromResult<SocialInfo>(null);
+            }
 
-            var faceImage = new Image<Gray, byte>(new Bitmap(image));
+            _faceRecognizer.Read(TrainingDataPath);
 
-            var result = _faceRecognizer.Predict(faceImage.Resize(100, 100, Inter.Cubic));
+            var faceImage = new Image<Gray, byte>(imagePath);
+
+            var result = _faceRecognizer.Predict(faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic));
+            //var result = _faceRecognizer.Predict(faceImage);
 
             var id = result.Label;
 
-            if (id > 0 && _socialInfoData.TryGetValue(id, out var socialInfo))
+            if (id > 0)
             {
-                return Task.FromResult(socialInfo);
+                var infoPath = Path.Combine(DataFolder, $"{id.ToString()}.json");
+
+                if (File.Exists(infoPath))
+                {
+                    var infoJson = File.ReadAllText(infoPath);
+
+                    var socialInfo = JsonConvert.DeserializeObject<SocialInfo>(infoJson);
+
+                    return Task.FromResult(socialInfo);
+                }
             }
 
             return Task.FromResult<SocialInfo>(null);
@@ -87,9 +117,11 @@ namespace Smarties.SocialTagMe.Framework
 
         private void Train()
         {
-            if (_faceData != null)
+            var files = Directory.GetFiles(DataFolder, "*.image");
+
+            if (files?.Length > 0)
             {
-                var count = _faceData.Count;
+                var count = files.Length;
 
                 var counter = 0;
 
@@ -97,24 +129,26 @@ namespace Smarties.SocialTagMe.Framework
 
                 var faceLabels = new int[count];
 
-                foreach (var item in _faceData)
+                foreach (var file in files)
                 {
-                    var stream = new MemoryStream();
+                    var faceImage = new Image<Gray, byte>(file);
 
-                    stream.Write(item.Value, 0, item.Value.Length);
+                    faceImages[counter] = faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic).Mat;
+                    //faceImages[counter] = faceImage.Mat;
 
-                    var faceImage = new Image<Gray, byte>(new Bitmap(stream));
-
-                    faceImages[counter] = faceImage.Resize(100, 100, Inter.Cubic).Mat;
-
-                    faceLabels[counter] = item.Key;
+                    faceLabels[counter] = int.Parse(Path.GetFileNameWithoutExtension(file));
 
                     counter++;
                 }
 
+                if (File.Exists(TrainingDataPath))
+                {
+                    _faceRecognizer.Read(TrainingDataPath);
+                }
+
                 _faceRecognizer.Train(faceImages, faceLabels);
 
-                _faceRecognizer.Write(DataFolder);
+                _faceRecognizer.Write(TrainingDataPath);
             }
         }
 

@@ -1,14 +1,13 @@
 ﻿using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace Smarties.SocialTagMe.Web.Services
 {
     public class MockTagService : ITagService
     {
-        public Task<int> TagAsync(Stream image, SocialInfo socialInfo = null)
+        public Task<int> TagAsync(string imagePath, SocialInfo socialInfo = null)
         {
             throw new NotImplementedException();
         }
@@ -18,7 +17,7 @@ namespace Smarties.SocialTagMe.Web.Services
             throw new NotImplementedException();
         }
 
-        public Task<SocialInfo> QueryAsync(Stream image)
+        public Task<SocialInfo> QueryAsync(string imagePath)
         {
             throw new NotImplementedException();
         }
