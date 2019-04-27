@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Smarties.SocialTagMe.Abstractions.Models;
-using Smarties.SocialTagMe.Web.Services;
-using System.IO;
-using System.Threading.Tasks;
+using Smarties.SocialTagMe.Abstractions.Services;
 
 namespace Smarties.SocialTagMe.Web.Controllers
 {
@@ -11,11 +11,11 @@ namespace Smarties.SocialTagMe.Web.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
-        private readonly MockTagService _mockTagService;
+        private readonly ITagService _tagService;
 
-        public TagController(MockTagService mockTagService)
+        public TagController(ITagService tagService)
         {
-            _mockTagService = mockTagService;
+            _tagService = tagService;
         }
 
         [HttpPost("query")]
@@ -28,7 +28,7 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 await file.CopyToAsync(fs);
             }
 
-            return await _mockTagService.QueryAsync(fs); 
+            return await _tagService.QueryAsync(fs); 
         }
 
         [HttpPost("update/{id}")]
@@ -39,7 +39,7 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 return;
             }
 
-            await _mockTagService.UpdateAsync(id, socialInfo);
+            await _tagService.UpdateAsync(id, socialInfo);
         }
 
         [HttpPost("tag")]
@@ -52,7 +52,7 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 await file.CopyToAsync(fs);
             }
 
-            return await _mockTagService.TagAsync(fs, socialInfo);
+            return await _tagService.TagAsync(fs, socialInfo);
         }
     }
 }
