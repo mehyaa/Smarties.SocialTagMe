@@ -16,13 +16,15 @@ namespace Smarties.SocialTagMe.Client
 
             byte[] fileBytes = File.ReadAllBytes(path);
 
-            var stream = new MemoryStream(fileBytes);
-
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("http://localhost:5000");
 
-                var content = new StreamContent(stream);
+                var content = new MultipartFormDataContent();
+
+                var byteArrayContent = new ByteArrayContent(fileBytes);
+
+                content.Add(byteArrayContent, "file", "hello");
 
                 var result = client.PostAsync("/api/tag/query", content, default);
 
