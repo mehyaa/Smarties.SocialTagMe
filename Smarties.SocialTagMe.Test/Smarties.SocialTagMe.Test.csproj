@@ -70,6 +70,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Smarties.SocialTagMe.Framework\Smarties.SocialTagMe.Framework.csproj" />
+    <ProjectReference Include="..\Smarties.SocialTagMe.Abstractions\Smarties.SocialTagMe.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>
