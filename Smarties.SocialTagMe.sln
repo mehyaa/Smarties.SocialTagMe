@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Smarties.SocialTagMe.Framew
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Smarties.SocialTagMe.Test", "Smarties.SocialTagMe.Test\Smarties.SocialTagMe.Test.csproj", "{9531586F-8171-4DC2-8949-5591000862EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Smarties.SocialTagMe.Client", "Smarties.SocialTagMe.Client\Smarties.SocialTagMe.Client.csproj", "{B560C73B-52F9-48AC-BA35-10505D807AA6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{9531586F-8171-4DC2-8949-5591000862EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9531586F-8171-4DC2-8949-5591000862EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9531586F-8171-4DC2-8949-5591000862EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B560C73B-52F9-48AC-BA35-10505D807AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B560C73B-52F9-48AC-BA35-10505D807AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B560C73B-52F9-48AC-BA35-10505D807AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B560C73B-52F9-48AC-BA35-10505D807AA6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
