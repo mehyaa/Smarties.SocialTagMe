@@ -20,6 +20,8 @@ namespace Smarties.SocialTagMe.Framework
 
             if (files.Any() && socialInfo != null)
             {
+                socialInfo.Id = id;
+
                 var infoPath = Path.Combine(DataFolder, $"{id.ToString()}.json");
 
                 var infoJson = JsonConvert.SerializeObject(socialInfo);

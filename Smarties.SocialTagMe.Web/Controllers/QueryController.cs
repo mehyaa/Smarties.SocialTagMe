@@ -29,7 +29,7 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 return null;
             }
 
-            var imagePath = Path.GetTempFileName();
+            var imagePath = $"{Path.GetTempFileName()}.{file.FileName}";
 
             using (var fileStream = new FileStream(imagePath, FileMode.Append))
             {
