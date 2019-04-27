@@ -2,5 +2,6 @@
 {
     public class SocialInfo
     {
+        public int Id { get; set; }
     }
 }
