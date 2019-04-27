@@ -4,6 +4,7 @@ using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Smarties.SocialTagMe.Web.Controllers
@@ -12,19 +13,23 @@ namespace Smarties.SocialTagMe.Web.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
+        private readonly IIdService _idService;
+        private readonly IImageService _imageService;
         private readonly ITagService _tagService;
 
-        public TagController(ITagService tagService)
+        public TagController(IIdService idService, IImageService imageService, ITagService tagService)
         {
+            _idService = idService;
+            _imageService = imageService;
             _tagService = tagService;
         }
 
-        [HttpPost("tag")]
-        public async Task<int> Tag(IFormFileCollection files, [FromForm] SocialInfo socialInfo)
+        [HttpPost]
+        public async Task<int?> Add(IFormFileCollection files, [FromForm] SocialInfo socialInfo)
         {
             if (files?.Count > 0)
             {
-                var filePaths = new List<string>();
+                var imagePaths = new List<string>();
 
                 foreach (var file in files)
                 {
@@ -33,23 +38,44 @@ namespace Smarties.SocialTagMe.Web.Controllers
                         continue;
                     }
 
-                    var filePath = Path.GetTempFileName();
+                    var imagePath = Path.GetTempFileName();
 
-                    using (var fileStream = new FileStream(filePath, FileMode.Append))
+                    using (var fileStream = new FileStream(imagePath, FileMode.Append))
                     {
                         await file.CopyToAsync(fileStream);
                     }
 
-                    filePaths.Add(filePath);
+                    var faces = await _imageService.DetectFaceAsync(imagePath);
+
+                    var biggestFace = faces.OrderByDescending(x => x.Width * x.Height).FirstOrDefault();
+
+                    if (biggestFace == null)
+                    {
+                        continue;
+                    }
+
+                    imagePaths.Add(biggestFace.Path);
                 }
 
-                return await _tagService.TagAsync(filePaths, socialInfo);
+                if (imagePaths.Count > 0)
+                {
+                    var id = await _idService.GetAsync();
+
+                    await _imageService.AddAsync(id, imagePaths);
+
+                    if (socialInfo != null)
+                    {
+                        await _tagService.AddOrUpdateAsync(id, socialInfo);
+                    }
+
+                    return id;
+                }
             }
 
-            return -1;
+            return null;
         }
 
-        [HttpPost("update/{id:int}")]
+        [HttpPut("{id:int}")]
         public async Task Update(int id, [FromBody] SocialInfo socialInfo)
         {
             if (id == default || socialInfo == null)
@@ -57,27 +83,7 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 return;
             }
 
-            await _tagService.UpdateAsync(id, socialInfo);
-        }
-
-        [HttpPost("query")]
-        public async Task<SocialInfo> Query(IFormFile file)
-        {
-            if (file.Length == 0)
-            {
-                return null;
-            }
-
-            var filePath = Path.GetTempFileName();
-
-            using (var fileStream = new FileStream(filePath, FileMode.Append))
-            {
-                await file.CopyToAsync(fileStream);
-            }
-
-            var socialInfo = await _tagService.QueryAsync(filePath);
-
-            return socialInfo;
+            await _tagService.AddOrUpdateAsync(id, socialInfo);
         }
     }
 }

@@ -3,6 +3,7 @@ using Smarties.SocialTagMe.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,39 +19,71 @@ namespace Smarties.SocialTagMe.Test
         [Fact]
         public async Task TagBatchAsync()
         {
+            var idService = new IdService();
+
+            var imageService = new ImageService();
+
             var tagService = new TagService();
 
             var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
 
-            var files = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
+            var groupedFiles =
+                Directory
+                    .GetFiles(dir, "*.*", SearchOption.AllDirectories)
+                    .GroupBy(x => Path.GetFileName(Path.GetDirectoryName(x)));
 
-            foreach (var imagePath in files)
+            foreach (var files in groupedFiles)
             {
-                var fileName = Path.GetFileName(imagePath);
+                var dirName = files.Key;
 
-                var dirName = Path.GetFileName(Path.GetDirectoryName(imagePath));
+                var id = await idService.GetAsync();
 
-                if (_ignoredFiles.Contains(fileName))
+                var imagePaths = new List<string>();
+
+                foreach (var imagePath in files)
+                {
+                    var fileName = Path.GetFileName(imagePath);
+
+                    if (_ignoredFiles.Contains(fileName))
+                    {
+                        continue;
+                    }
+
+                    var faces = await imageService.DetectFaceAsync(imagePath);
+
+                    var biggestFace = faces.OrderByDescending(x => x.Width * x.Height).FirstOrDefault();
+
+                    if (biggestFace == null)
+                    {
+                        continue;
+                    }
+
+                    imagePaths.Add(biggestFace.Path);
+                }
+
+                if (imagePaths.Count == 0)
                 {
                     continue;
                 }
-
-                var imagePaths = new[] { imagePath };
 
                 var socialInfo = new SocialInfo
                 {
                     Name = dirName
                 };
 
-                var id = await tagService.TagAsync(imagePaths, socialInfo, train: false);
+                await imageService.AddAsync(id, imagePaths, train: false);
+
+                await tagService.AddOrUpdateAsync(id, socialInfo);
             }
 
-            await tagService.TrainAsync();
+            await imageService.TrainAsync();
         }
 
         [Fact]
         public async Task QueryRandomAsync()
         {
+            var imageService = new ImageService();
+
             var tagService = new TagService();
 
             var imagePath = GetRandomImagePath();
@@ -59,15 +92,24 @@ namespace Smarties.SocialTagMe.Test
 
             var dirName = Path.GetFileName(Path.GetDirectoryName(imagePath));
 
-            var socialInfo = await tagService.QueryAsync(imagePath);
+            var id = await imageService.RecognizeAsync(imagePath);
 
             if (_ignoredFiles.Contains(fileName))
             {
-                Assert.Null(socialInfo);
+                Assert.Null(id);
             }
             else
             {
-                Assert.Equal(dirName, socialInfo?.Name);
+                if (id.HasValue)
+                {
+                    var socialInfo = await tagService.GetAsync(id.Value);
+
+                    Assert.Equal(dirName, socialInfo?.Name);
+                }
+                else
+                {
+                    throw new Exception("No id returned.");
+                }
             }
         }
 

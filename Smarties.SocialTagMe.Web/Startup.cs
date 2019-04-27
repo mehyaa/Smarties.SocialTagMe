@@ -19,7 +19,12 @@ namespace Smarties.SocialTagMe.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //services.AddSingleton<IIdService, MockIdService>();
+            //services.AddSingleton<IImageService, MockImageService>();
             //services.AddSingleton<ITagService, MockTagService>();
+
+            services.AddSingleton<IIdService, Framework.IdService>();
+            services.AddSingleton<IImageService, Framework.ImageService>();
             services.AddSingleton<ITagService, Framework.TagService>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
@@ -28,11 +33,6 @@ namespace Smarties.SocialTagMe.Web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
             app.UseMvc();
         }
     }
