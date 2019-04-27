@@ -10,24 +10,12 @@ namespace Smarties.SocialTagMe.Test
     public class TagServiceTest
     {
         [Fact]
-        public async Task TagFaceAsync()
+        public async Task TagAllAsync()
         {
-            var tagService = new TagService();
-
-            var imagePaths = new[]
-            {
-                GetImagePath("face1.jpg"),
-                GetImagePath("face2.jpg"),
-                GetImagePath("face3.jpg"),
-                GetImagePath("face4.jpg")
-            };
-
-            var socialInfo = new SocialInfo
-            {
-                Name = "face"
-            };
-
-            var id = await tagService.TagAsync(imagePaths, socialInfo);
+            await TagAliAsync();
+            await TagFaceAsync();
+            await TagMehyaaAsync();
+            await TagMuratAsync();
         }
 
         [Fact]
@@ -47,6 +35,27 @@ namespace Smarties.SocialTagMe.Test
             var socialInfo = new SocialInfo
             {
                 Name = "ali"
+            };
+
+            var id = await tagService.TagAsync(imagePaths, socialInfo);
+        }
+
+        [Fact]
+        public async Task TagFaceAsync()
+        {
+            var tagService = new TagService();
+
+            var imagePaths = new[]
+            {
+                GetImagePath("face1.jpg"),
+                GetImagePath("face2.jpg"),
+                GetImagePath("face3.jpg"),
+                GetImagePath("face4.jpg")
+            };
+
+            var socialInfo = new SocialInfo
+            {
+                Name = "face"
             };
 
             var id = await tagService.TagAsync(imagePaths, socialInfo);
@@ -96,6 +105,27 @@ namespace Smarties.SocialTagMe.Test
             };
 
             var id = await tagService.TagAsync(imagePaths, socialInfo);
+        }
+
+        [Fact]
+        public async Task QueryRandomAsync()
+        {
+            var tagService = new TagService();
+
+            var imagePath = GetRandomImagePath();
+
+            var name = GetName(imagePath);
+
+            var socialInfo = await tagService.QueryAsync(imagePath);
+
+            if (name == "unknown")
+            {
+                Assert.Null(socialInfo);
+            }
+            else
+            {
+                Assert.Equal(name, socialInfo?.Name);
+            }
         }
 
         [Fact]
@@ -188,9 +218,27 @@ namespace Smarties.SocialTagMe.Test
             Assert.Null(socialInfo1);
         }
 
-        private string GetImagePath(string name)
+        private static string GetName(string filePath)
         {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", name);
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            return fileName.Substring(0, fileName.Length - 1);
+        }
+
+        private static string GetImagePath(string fileName)
+        {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", fileName);
+        }
+
+        private static string GetRandomImagePath()
+        {
+            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+
+            var files = Directory.GetFiles(dir);
+
+            var random = new Random();
+
+            return files[random.Next(files.Length)];
         }
     }
 }

@@ -20,28 +20,33 @@ namespace Smarties.SocialTagMe.Web.Controllers
         }
 
         [HttpPost("tag")]
-        public async Task<int> Tag(IEnumerable<IFormFile> files)
+        public async Task<int> Tag(IFormFileCollection files, [FromForm] SocialInfo socialInfo)
         {
-            var filePaths = new List<string>();
-
-            foreach (var file in files)
+            if (files?.Count > 0)
             {
-                if (file.Length == 0)
+                var filePaths = new List<string>();
+
+                foreach (var file in files)
                 {
-                    continue;
+                    if (file.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    var filePath = Path.GetTempFileName();
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Append))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+
+                    filePaths.Add(filePath);
                 }
 
-                var filePath = Path.GetTempFileName();
-
-                using (var fileStream = new FileStream(filePath, FileMode.Append))
-                {
-                    await file.CopyToAsync(fileStream);
-                }
-
-                filePaths.Add(filePath);
+                return await _tagService.TagAsync(filePaths, socialInfo);
             }
 
-            return await _tagService.TagAsync(filePaths);
+            return -1;
         }
 
         [HttpPost("update/{id:int}")]
