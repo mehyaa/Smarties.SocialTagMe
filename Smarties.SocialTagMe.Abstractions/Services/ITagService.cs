@@ -6,8 +6,9 @@ namespace Smarties.SocialTagMe.Abstractions.Services
 {
     public interface ITagService
     {
-        Task<int> TagAsync(IEnumerable<string> imagePaths, SocialInfo socialInfo = null);
+        Task<int> TagAsync(IEnumerable<string> imagePaths, SocialInfo socialInfo = null, bool train = true);
         Task UpdateAsync(int id, SocialInfo socialInfo);
         Task<SocialInfo> QueryAsync(string imagePath);
+        Task TrainAsync();
     }
 }

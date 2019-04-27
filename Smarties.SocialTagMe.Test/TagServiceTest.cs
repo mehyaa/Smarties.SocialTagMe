@@ -1,6 +1,7 @@
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -9,102 +10,42 @@ namespace Smarties.SocialTagMe.Test
 {
     public class TagServiceTest
     {
-        [Fact]
-        public async Task TagAllAsync()
+        private readonly HashSet<string> _ignoredFiles = new HashSet<string>
         {
-            await TagAliAsync();
-            await TagFaceAsync();
-            await TagMehyaaAsync();
-            await TagMuratAsync();
-        }
+            "unknown1.jpg"
+        };
 
         [Fact]
-        public async Task TagAliAsync()
+        public async Task TagBatchAsync()
         {
             var tagService = new TagService();
 
-            var imagePaths = new[]
+            var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+
+            var files = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
+
+            foreach (var imagePath in files)
             {
-                GetImagePath("ali1.jpg"),
-                GetImagePath("ali2.jpg"),
-                GetImagePath("ali3.jpg"),
-                GetImagePath("ali4.jpg"),
-                GetImagePath("ali5.jpg")
-            };
+                var fileName = Path.GetFileName(imagePath);
 
-            var socialInfo = new SocialInfo
-            {
-                Name = "ali"
-            };
+                var dirName = Path.GetFileName(Path.GetDirectoryName(imagePath));
 
-            var id = await tagService.TagAsync(imagePaths, socialInfo);
-        }
+                if (_ignoredFiles.Contains(fileName))
+                {
+                    continue;
+                }
 
-        [Fact]
-        public async Task TagFaceAsync()
-        {
-            var tagService = new TagService();
+                var imagePaths = new[] { imagePath };
 
-            var imagePaths = new[]
-            {
-                GetImagePath("face1.jpg"),
-                GetImagePath("face2.jpg"),
-                GetImagePath("face3.jpg"),
-                GetImagePath("face4.jpg")
-            };
+                var socialInfo = new SocialInfo
+                {
+                    Name = dirName
+                };
 
-            var socialInfo = new SocialInfo
-            {
-                Name = "face"
-            };
+                var id = await tagService.TagAsync(imagePaths, socialInfo, train: false);
+            }
 
-            var id = await tagService.TagAsync(imagePaths, socialInfo);
-        }
-
-        [Fact]
-        public async Task TagMehyaaAsync()
-        {
-            var tagService = new TagService();
-
-            var imagePaths = new[]
-            {
-                GetImagePath("mehyaa1.jpg"),
-                GetImagePath("mehyaa2.jpg"),
-                GetImagePath("mehyaa3.jpg"),
-                GetImagePath("mehyaa4.jpg"),
-                GetImagePath("mehyaa5.jpg"),
-                GetImagePath("mehyaa6.jpg"),
-                GetImagePath("mehyaa7.jpg")
-            };
-
-            var socialInfo = new SocialInfo
-            {
-                Name = "mehyaa"
-            };
-
-            var id = await tagService.TagAsync(imagePaths, socialInfo);
-        }
-
-        [Fact]
-        public async Task TagMuratAsync()
-        {
-            var tagService = new TagService();
-
-            var imagePaths = new[]
-            {
-                GetImagePath("murat1.jpg"),
-                GetImagePath("murat2.jpg"),
-                GetImagePath("murat3.jpg"),
-                GetImagePath("murat4.jpg"),
-                GetImagePath("murat5.jpg")
-            };
-
-            var socialInfo = new SocialInfo
-            {
-                Name = "murat"
-            };
-
-            var id = await tagService.TagAsync(imagePaths, socialInfo);
+            await tagService.TrainAsync();
         }
 
         [Fact]
@@ -114,120 +55,20 @@ namespace Smarties.SocialTagMe.Test
 
             var imagePath = GetRandomImagePath();
 
-            var name = GetName(imagePath);
+            var fileName = Path.GetFileName(imagePath);
+
+            var dirName = Path.GetFileName(Path.GetDirectoryName(imagePath));
 
             var socialInfo = await tagService.QueryAsync(imagePath);
 
-            if (name == "unknown")
+            if (_ignoredFiles.Contains(fileName))
             {
                 Assert.Null(socialInfo);
             }
             else
             {
-                Assert.Equal(name, socialInfo?.Name);
+                Assert.Equal(dirName, socialInfo?.Name);
             }
-        }
-
-        [Fact]
-        public async Task QueryTestAsync()
-        {
-            var tagService = new TagService();
-
-            var imagePath1 = GetImagePath("face1.jpg");
-
-            var socialInfo1 = await tagService.QueryAsync(imagePath1);
-
-            Assert.Equal("face", socialInfo1?.Name);
-
-            var imagePath2 = GetImagePath("face2.jpg");
-
-            var socialInfo2 = await tagService.QueryAsync(imagePath2);
-
-            Assert.Equal("face", socialInfo2?.Name);
-
-            var imagePath3 = GetImagePath("face3.jpg");
-
-            var socialInfo3 = await tagService.QueryAsync(imagePath3);
-
-            Assert.Equal("face", socialInfo3?.Name);
-
-            var imagePath4 = GetImagePath("face4.jpg");
-
-            var socialInfo4 = await tagService.QueryAsync(imagePath4);
-
-            Assert.Equal("face", socialInfo4?.Name);
-        }
-
-        [Fact]
-        public async Task Query2TestAsync()
-        {
-            var tagService = new TagService();
-
-            var imagePath1 = GetImagePath("mehyaa1.jpg");
-
-            var socialInfo1 = await tagService.QueryAsync(imagePath1);
-
-            Assert.Equal("mehyaa", socialInfo1?.Name);
-
-            var imagePath2 = GetImagePath("mehyaa2.jpg");
-
-            var socialInfo2 = await tagService.QueryAsync(imagePath2);
-
-            Assert.Equal("mehyaa", socialInfo2?.Name);
-
-            var imagePath3 = GetImagePath("mehyaa3.jpg");
-
-            var socialInfo3 = await tagService.QueryAsync(imagePath3);
-
-            Assert.Equal("mehyaa", socialInfo3?.Name);
-
-            var imagePath4 = GetImagePath("mehyaa4.jpg");
-
-            var socialInfo4 = await tagService.QueryAsync(imagePath4);
-
-            Assert.Equal("mehyaa", socialInfo4?.Name);
-
-            var imagePath5 = GetImagePath("mehyaa5.jpg");
-
-            var socialInfo5 = await tagService.QueryAsync(imagePath5);
-
-            Assert.Equal("mehyaa", socialInfo5?.Name);
-
-            var imagePath6 = GetImagePath("mehyaa6.jpg");
-
-            var socialInfo6 = await tagService.QueryAsync(imagePath6);
-
-            Assert.Equal("mehyaa", socialInfo6?.Name);
-
-            var imagePath7 = GetImagePath("mehyaa7.jpg");
-
-            var socialInfo7 = await tagService.QueryAsync(imagePath7);
-
-            Assert.Equal("mehyaa", socialInfo7?.Name);
-        }
-
-        [Fact]
-        public async Task QueryUnknownTestAsync()
-        {
-            var tagService = new TagService();
-
-            var imagePath1 = GetImagePath("unknown1.jpg");
-
-            var socialInfo1 = await tagService.QueryAsync(imagePath1);
-
-            Assert.Null(socialInfo1);
-        }
-
-        private static string GetName(string filePath)
-        {
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
-
-            return fileName.Substring(0, fileName.Length - 1);
-        }
-
-        private static string GetImagePath(string fileName)
-        {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", fileName);
         }
 
         private static string GetRandomImagePath()

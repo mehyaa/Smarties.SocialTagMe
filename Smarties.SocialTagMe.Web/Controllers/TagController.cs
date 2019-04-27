@@ -75,7 +75,9 @@ namespace Smarties.SocialTagMe.Web.Controllers
                 await file.CopyToAsync(fileStream);
             }
 
-            return await _tagService.QueryAsync(filePath);
+            var socialInfo = await _tagService.QueryAsync(filePath);
+
+            return socialInfo;
         }
     }
 }

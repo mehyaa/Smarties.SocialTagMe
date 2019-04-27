@@ -8,7 +8,7 @@ namespace Smarties.SocialTagMe.Web.Services
 {
     public class MockTagService : ITagService
     {
-        public Task<int> TagAsync(IEnumerable<string> imagePaths, SocialInfo socialInfo = null)
+        public Task<int> TagAsync(IEnumerable<string> imagePaths, SocialInfo socialInfo = null, bool train = true)
         {
             throw new NotImplementedException();
         }
@@ -19,6 +19,11 @@ namespace Smarties.SocialTagMe.Web.Services
         }
 
         public Task<SocialInfo> QueryAsync(string imagePath)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task TrainAsync()
         {
             throw new NotImplementedException();
         }

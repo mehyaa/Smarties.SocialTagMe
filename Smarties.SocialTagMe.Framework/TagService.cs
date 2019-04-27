@@ -15,41 +15,46 @@ namespace Smarties.SocialTagMe.Framework
 {
     public class TagService : ITagService
     {
-        private const int FaceRecognizerNumberOfComponents = 0;
-        private const int FaceRecognizerThreshold = 15;
+        private const int FaceRecognizerNumberOfComponents = 1;
+        private const double FaceRecognizerThreshold = double.MaxValue / 80;
 
-        private const int ResizeImageWidth = 400;
-        private const int ResizeImageHeight = 300;
+        private const int ResizeImageWidth = 128;
+        private const int ResizeImageHeight = 128;
 
         private string DataFolder => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Data");
 
-        private string TrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.data");
+        private string FisherTrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.Fisher.data");
+        private string LBPHTrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.LBPH.data");
 
-        private readonly FaceRecognizer _faceRecognizer;
+        private readonly FisherFaceRecognizer _fisherFaceRecognizer;
+        private readonly LBPHFaceRecognizer _lbphFaceRecognizer;
 
         public TagService()
         {
-            _faceRecognizer = new EigenFaceRecognizer(FaceRecognizerNumberOfComponents, FaceRecognizerThreshold);
+            _fisherFaceRecognizer = new FisherFaceRecognizer();
+            //_fisherFaceRecognizer = new FisherFaceRecognizer(FaceRecognizerNumberOfComponents, FaceRecognizerThreshold);
+            _lbphFaceRecognizer = new LBPHFaceRecognizer();
+            //_lbphFaceRecognizer = new LBPHFaceRecognizer(1, 8, 8, 8, 123);
 
             if (!Directory.Exists(DataFolder))
             {
                 Directory.CreateDirectory(DataFolder);
             }
+
+            if (File.Exists(FisherTrainingDataPath))
+            {
+                _fisherFaceRecognizer.Read(FisherTrainingDataPath);
+            }
+
+            if (File.Exists(LBPHTrainingDataPath))
+            {
+                _lbphFaceRecognizer.Read(LBPHTrainingDataPath);
+            }
         }
 
-        public async Task<int> TagAsync(IEnumerable<string> paths, SocialInfo socialInfo = null)
+        public async Task<int> TagAsync(IEnumerable<string> paths, SocialInfo socialInfo = null, bool train = true)
         {
             var pathArray = paths.ToArray();
-
-            foreach (var path in pathArray)
-            {
-                var existingSocialInfo = await QueryAsync(path);
-
-                if (existingSocialInfo != null)
-                {
-                    return existingSocialInfo.Id;
-                }
-            }
 
             var id = NextId();
 
@@ -73,7 +78,10 @@ namespace Smarties.SocialTagMe.Framework
                 File.WriteAllText(infoPath, infoJson);
             }
 
-            Train();
+            if (train)
+            {
+                await TrainAsync();
+            }
 
             return id;
         }
@@ -96,19 +104,20 @@ namespace Smarties.SocialTagMe.Framework
 
         public Task<SocialInfo> QueryAsync(string imagePath)
         {
-            if (!File.Exists(TrainingDataPath))
-            {
-                return Task.FromResult<SocialInfo>(null);
-            }
-
-            _faceRecognizer.Read(TrainingDataPath);
-
             var faceImage = new Image<Gray, byte>(imagePath);
 
-            var result = _faceRecognizer.Predict(faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic));
-            //var result = _faceRecognizer.Predict(faceImage);
+            faceImage = faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic);
 
-            var id = result.Label;
+            var fisherFaceRecognizerResult = _fisherFaceRecognizer.Predict(faceImage);
+
+            var lbphFaceRecognizerResult = _lbphFaceRecognizer.Predict(faceImage);
+
+            var id = fisherFaceRecognizerResult.Label;
+
+            if (id <= 0)
+            {
+                id = lbphFaceRecognizerResult.Label;
+            }
 
             if (id > 0)
             {
@@ -127,7 +136,7 @@ namespace Smarties.SocialTagMe.Framework
             return Task.FromResult<SocialInfo>(null);
         }
 
-        private void Train()
+        public Task TrainAsync()
         {
             var files = Directory.GetFiles(DataFolder, "*.image");
 
@@ -145,23 +154,25 @@ namespace Smarties.SocialTagMe.Framework
                 {
                     var faceImage = new Image<Gray, byte>(file);
 
-                    faceImages[counter] = faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic).Mat;
-                    //faceImages[counter] = faceImage.Mat;
+                    faceImage = faceImage.Resize(ResizeImageWidth, ResizeImageHeight, Inter.Cubic);
+
+                    faceImages[counter] = faceImage.Mat;
 
                     faceLabels[counter] = int.Parse(Path.GetFileName(file).Split('.').First());
 
                     counter++;
                 }
 
-                if (File.Exists(TrainingDataPath))
-                {
-                    _faceRecognizer.Read(TrainingDataPath);
-                }
+                _fisherFaceRecognizer.Train(faceImages, faceLabels);
 
-                _faceRecognizer.Train(faceImages, faceLabels);
+                _fisherFaceRecognizer.Write(FisherTrainingDataPath);
 
-                _faceRecognizer.Write(TrainingDataPath);
+                _lbphFaceRecognizer.Train(faceImages, faceLabels);
+
+                _lbphFaceRecognizer.Write(LBPHTrainingDataPath);
             }
+
+            return Task.CompletedTask;
         }
 
         private static int NextId()
