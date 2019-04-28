@@ -31,9 +31,19 @@ namespace Smarties.SocialTagMe.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime applicationLifetime)
         {
             app.UseMvc();
+
+            applicationLifetime.ApplicationStarted.Register(async () =>
+            {
+                using (var serviceScope = app.ApplicationServices.CreateScope())
+                {
+                    var imageService = serviceScope.ServiceProvider.GetRequiredService<IImageService>();
+
+                    await imageService.TrainAsync();
+                }
+            });
         }
     }
 }

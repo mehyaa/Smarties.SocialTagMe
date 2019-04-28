@@ -24,7 +24,7 @@ namespace Smarties.SocialTagMe.Framework
 
         private string FisherTrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.Fisher.data");
         private string LBPHTrainingDataPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Training.LBPH.data");
-        private string CascadeClassifierConfigPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Properties", "haarcascade_frontalface_alt_tree.xml");
+        private string CascadeClassifierConfigPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Properties", "haarcascade_frontalface_default.xml");
 
         private readonly FisherFaceRecognizer _fisherFaceRecognizer;
         private readonly LBPHFaceRecognizer _lbphFaceRecognizer;
@@ -37,7 +37,7 @@ namespace Smarties.SocialTagMe.Framework
             //_fisherFaceRecognizer = new FisherFaceRecognizer(FaceRecognizerNumberOfComponents, FaceRecognizerThreshold);
 
             _lbphFaceRecognizer = new LBPHFaceRecognizer();
-            //_lbphFaceRecognizer = new LBPHFaceRecognizer(1, 8, 8, 8, 123);
+            //_lbphFaceRecognizer = new LBPHFaceRecognizer(1, 8, 32, 32, 256);
 
             _cascadeClassifier = new CascadeClassifier(CascadeClassifierConfigPath);
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Smarties.SocialTagMe.Abstractions.Models;
 using Smarties.SocialTagMe.Abstractions.Services;
 using System.Collections.Generic;
@@ -13,19 +14,27 @@ namespace Smarties.SocialTagMe.Web.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
+        private readonly ILogger<TagController> _logger;
         private readonly IIdService _idService;
         private readonly IImageService _imageService;
         private readonly ITagService _tagService;
 
-        public TagController(IIdService idService, IImageService imageService, ITagService tagService)
+        public TagController(
+            ILogger<TagController> logger,
+            IIdService idService,
+            IImageService imageService,
+            ITagService tagService)
         {
+            _logger = logger;
             _idService = idService;
             _imageService = imageService;
             _tagService = tagService;
         }
 
         [HttpPost]
-        public async Task<int?> Add(IFormFileCollection files, [FromForm] SocialInfo socialInfo)
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Add(IFormFileCollection files, [FromForm] SocialInfo socialInfo)
         {
             if (files?.Count > 0)
             {
@@ -68,22 +77,26 @@ namespace Smarties.SocialTagMe.Web.Controllers
                         await _tagService.AddOrUpdateAsync(id, socialInfo);
                     }
 
-                    return id;
+                    return Ok(id);
                 }
             }
 
-            return null;
+            return BadRequest();
         }
 
         [HttpPut("{id:int}")]
-        public async Task Update(int id, [FromBody] SocialInfo socialInfo)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Update(int id, [FromBody] SocialInfo socialInfo)
         {
             if (id == default || socialInfo == null)
             {
-                return;
+                return BadRequest();
             }
 
             await _tagService.AddOrUpdateAsync(id, socialInfo);
+
+            return NoContent();
         }
     }
 }
